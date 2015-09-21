@@ -21,6 +21,8 @@ import com.vaadin.data.util.sqlcontainer.query.FreeformQuery;
 import com.vaadin.data.util.sqlcontainer.query.TableQuery;
 import com.vaadin.data.util.sqlcontainer.query.generator.OracleGenerator;
 import com.vaadin.data.validator.EmailValidator;
+import com.vaadin.event.ItemClickEvent;
+import com.vaadin.event.ItemClickEvent.ItemClickListener;
 import com.vaadin.event.SelectionEvent;
 import com.vaadin.event.SelectionEvent.SelectionListener;
 import com.vaadin.navigator.View;
@@ -30,6 +32,7 @@ import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.ComboBox;
+import com.vaadin.ui.Component;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Grid;
@@ -137,17 +140,16 @@ public class DetailView extends CustomComponent implements View{
 	String userID = "";
 	private Label welcomeLabel;
 	private Button logoutButton;
+	private Button backButton;
 	//provided documents
 	private Grid plansAndSpecifications;
 	private Grid addenda;
 	private Grid referenceDocuments;
 	private Grid sealedDocuments;
-	private SQLContainer providedDocumentsContainer;
 	private SQLContainer plansAndSpecificationsContainer;
 	private SQLContainer addendaContainer;
 	private SQLContainer referenceDocumentsContainer;
 	private SQLContainer sealedDocumentsContainer;
-    private Button providedDocumentDownloadButton;
     private Button plansDownloadButton;
     private Button addendaDownloadButton;
     private Button referenceDocumentDownloadButton;
@@ -165,6 +167,13 @@ public class DetailView extends CustomComponent implements View{
 						+ "All printing costs are the responsibility of the user.");
 			}
 		};
+		backButton = new Button("back",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				getUI().getNavigator().navigateTo(MainView.NAME);
+            }
+        });
+		
 		logoutButton = new Button("logout",new Button.ClickListener() {
             @Override
             public void buttonClick(ClickEvent event) {
@@ -311,12 +320,6 @@ public class DetailView extends CustomComponent implements View{
 				setNullRepresentation("");
 			}
 		};	
-		advBreakDownGrid = new Grid() {
-			{
-				setCaption("Advertisement Breakdown");
-				setWidth("100%");
-			}
-		};
 		
 		email = new TextField("E-mail:") {
 			{
@@ -400,6 +403,38 @@ public class DetailView extends CustomComponent implements View{
 			}
 		};
 		
+		advBreakDownGrid = new Grid() {
+			{
+				setCaption("Advertisement Breakdown");
+				setWidth("100%");
+				
+				setDetailsGenerator(new DetailsGenerator() {
+			        @Override
+			        public Component getDetails(RowReference rowReference) {
+			            Label label = new Label("Description:");
+			            
+			            Label descriptionLabel = new Label(rowReference.getItem().getItemProperty("DESCRIPTION").getValue().toString());
+
+			            // Wrap up all the parts into a vertical layout
+			            VerticalLayout layout = new VerticalLayout(label,  descriptionLabel);
+			            layout.setSpacing(true);
+			            layout.setMargin(true);
+			            return layout;
+			        }
+			    });
+				
+				addItemClickListener(new ItemClickListener() {
+			        @Override
+			        public void itemClick(ItemClickEvent event) {
+			            if (event.isDoubleClick()) {
+			                Object itemId = event.getItemId();
+			                advBreakDownGrid.setDetailsVisible(itemId, !advBreakDownGrid.isDetailsVisible(itemId));
+			            }
+			        }
+			    });
+			}
+		};
+		
 		plansDownloadButton = new Button("Download selected file", new Button.ClickListener() {
 			
 			@Override
@@ -476,7 +511,7 @@ public class DetailView extends CustomComponent implements View{
 							{
 								setSpacing(true);
 								setMargin(true);
-								//addComponent(viewButton);
+								addComponent(backButton);
 								addComponent(logoutButton);
 							}
 						};
@@ -733,13 +768,17 @@ public class DetailView extends CustomComponent implements View{
 		binder.bindMemberFields(this);
 		binder.setReadOnly(true);
 		
-		String advBreakDownQueryString = "select p.CAMPUSNAME as campus, "
+		String advBreakDownQueryString = "select " 
+										+"p.CAMPUSNAME as campus, " 
 										+"p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE as title, "
-										+"p.PUBLICDESCRIPTION as description "
-										+"from ADVERTISEMENTBREAKDOWNDETAILS a "
-										+"inner join ADVERTISEMENTDETAILS ad on ad.id = a.refobjectid "
+										+"sum(a.AMOUNT) as MAXBUDGET, "
+										+"0.9 * sum(a.AMOUNT) as MINBUDGET, "
+										+"p.PUBLICDESCRIPTION as description " 
+										+"from ADVERTISEMENTBREAKDOWNDETAILS a " 
 										+"inner join PROJECTDETAILSV1 p on a.PCSPROJECTID = p.id "
-										+"where ad.id = '"+advertisementID+"'";
+										+"where a.refobjectid = '"+advertisementID+"' "
+										+"group by a.pcsprojectid, p.CAMPUSNAME, p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE, p.PUBLICDESCRIPTION";
+
 //		System.out.println(advBreakDownQueryString);
 //		FreeformQuery advBreakDownQuery = new FreeformQuery(advBreakDownQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
 //		try {
@@ -750,8 +789,12 @@ public class DetailView extends CustomComponent implements View{
 //			e.printStackTrace();
 //		}
 		new GridDataLoader(advBreakDownQueryString, advBreakDownGrid, advBreakdownContainer).start();;
-		
-		String planHolderQueryString = "select * from planholders p where p.refobjectid = '"+advertisementID+"'";
+
+
+		String planHolderQueryString = "select P.EMAILADDRESS, "
+										+"p.FIRMNAME, P.ADDRESS, p.CITY, p.COUNTY, "
+										+ "P.STATE, P.COUNTRYCODE, P.POSTALCODE, P.PHONENUM "
+										+ "from planholders p where p.refobjectid = '"+advertisementID+"'";
 //		FreeformQuery planHolderQuery = new FreeformQuery(planHolderQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
 //		try {
 //			planHoldersContainer = new SQLContainer(planHolderQuery);
@@ -878,6 +921,17 @@ public class DetailView extends CustomComponent implements View{
 					@Override
 					public void run() {
 						grid.setContainerDataSource(container);
+						if(grid.getColumn("MAXBUDGET") != null) {
+							grid.getColumn("MAXBUDGET").setConverter(new OracleCurrencyToStringConverter());
+						}
+						if(grid.getColumn("MINBUDGET") != null) {
+							grid.getColumn("MINBUDGET").setConverter(new OracleCurrencyToStringConverter());
+
+						}
+						if(grid.getColumn("DESCRIPTION") != null) {
+							grid.getColumn("DESCRIPTION").setHidden(true);
+
+						}
 					}
 				});
 

@@ -30,6 +30,7 @@ import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 import com.vaadin.ui.Button.ClickEvent;
@@ -46,6 +47,11 @@ public class MainView extends CustomComponent implements View{
 	private VerticalLayout rootLayout;
 	private String advertisementID;
 	private Button logoutButton;
+    private Button DBBViewButton;
+    private Button DBPViewButton;
+    private Button CMViewButton;
+    private Button ROViewButton;
+    private Button RAViewButton;
 
 	public MainView() {
 		// TODO Auto-generated method stub
@@ -70,11 +76,11 @@ public class MainView extends CustomComponent implements View{
 					@Override
 					public void select(SelectionEvent event) {
 						// TODO Auto-generated method stub
-						Item item = DesignBidBuild.getContainerDataSource().getItem(DesignBidBuild.getSelectedRow());
-						if(item != null) {
-							advertisementID = item.getItemProperty("ID").getValue().toString();
-							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
-						}
+//						Item item = DesignBidBuild.getContainerDataSource().getItem(DesignBidBuild.getSelectedRow());
+//						if(item != null) {
+//							advertisementID = item.getItemProperty("ID").getValue().toString();
+//							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+//						}
 					}
 					
 				});
@@ -91,11 +97,11 @@ public class MainView extends CustomComponent implements View{
 					@Override
 					public void select(SelectionEvent event) {
 						// TODO Auto-generated method stub
-						Item item = DesignAndBuildProposal.getContainerDataSource().getItem(DesignAndBuildProposal.getSelectedRow());
-						if(item != null) {
-							advertisementID = item.getItemProperty("ID").getValue().toString();
-							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
-						}
+//						Item item = DesignAndBuildProposal.getContainerDataSource().getItem(DesignAndBuildProposal.getSelectedRow());
+//						if(item != null) {
+//							advertisementID = item.getItemProperty("ID").getValue().toString();
+//							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+//						}
 					}
 					
 				});
@@ -119,11 +125,11 @@ public class MainView extends CustomComponent implements View{
 					@Override
 					public void select(SelectionEvent event) {
 						// TODO Auto-generated method stub
-						Item item = CMAtRisk.getContainerDataSource().getItem(CMAtRisk.getSelectedRow());
-						if(item != null) {
-							advertisementID = item.getItemProperty("ID").getValue().toString();
-							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
-						}
+//						Item item = CMAtRisk.getContainerDataSource().getItem(CMAtRisk.getSelectedRow());
+//						if(item != null) {
+//							advertisementID = item.getItemProperty("ID").getValue().toString();
+//							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+//						}
 					}
 					
 				});
@@ -139,11 +145,11 @@ public class MainView extends CustomComponent implements View{
 					@Override
 					public void select(SelectionEvent event) {
 						// TODO Auto-generated method stub
-						Item item = OpenedBids.getContainerDataSource().getItem(OpenedBids.getSelectedRow());
-						if(item != null) {
-							advertisementID = item.getItemProperty("ID").getValue().toString();
-							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
-						}
+//						Item item = OpenedBids.getContainerDataSource().getItem(OpenedBids.getSelectedRow());
+//						if(item != null) {
+//							advertisementID = item.getItemProperty("ID").getValue().toString();
+//							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+//						}
 					}
 					
 				});
@@ -159,11 +165,11 @@ public class MainView extends CustomComponent implements View{
 					@Override
 					public void select(SelectionEvent event) {
 						// TODO Auto-generated method stub
-						Item item = RecentlyAwarded.getContainerDataSource().getItem(RecentlyAwarded.getSelectedRow());
-						if(item != null) {
-							advertisementID = item.getItemProperty("ID").getValue().toString();
-							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
-						}
+//						Item item = RecentlyAwarded.getContainerDataSource().getItem(RecentlyAwarded.getSelectedRow());
+//						if(item != null) {
+//							advertisementID = item.getItemProperty("ID").getValue().toString();
+//							getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+//						}
 					}
 					
 				});
@@ -180,7 +186,66 @@ public class MainView extends CustomComponent implements View{
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-		
+	    DBBViewButton = new Button("View Detail",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				Item item = DesignBidBuild.getContainerDataSource().getItem(DesignBidBuild.getSelectedRow());
+				if(item != null) {
+					advertisementID = item.getItemProperty("ID").getValue().toString();
+					getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+				} else {
+					Notification.show("Please select advertisement");
+				}
+            }
+        });
+	    DBPViewButton = new Button("View Detail",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				Item item = DesignAndBuildProposal.getContainerDataSource().getItem(DesignAndBuildProposal.getSelectedRow());
+				if(item != null) {
+					advertisementID = item.getItemProperty("ID").getValue().toString();
+					getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+				} else {
+					Notification.show("Please select advertisement");
+				}
+            }
+        });
+	    CMViewButton= new Button("View Detail",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				Item item = CMAtRisk.getContainerDataSource().getItem(CMAtRisk.getSelectedRow());
+				if(item != null) {
+					advertisementID = item.getItemProperty("ID").getValue().toString();
+					getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+				} else {
+					Notification.show("Please select advertisement");
+				}         }
+        });
+	    ROViewButton= new Button("View Detail",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				Item item = OpenedBids.getContainerDataSource().getItem(OpenedBids.getSelectedRow());
+				if(item != null) {
+					advertisementID = item.getItemProperty("ID").getValue().toString();
+					getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+				} else {
+					Notification.show("Please select advertisement");
+				}
+            }
+        });
+	    RAViewButton= new Button("View Detail",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+				Item item = RecentlyAwarded.getContainerDataSource().getItem(RecentlyAwarded.getSelectedRow());
+				if(item != null) {
+					advertisementID = item.getItemProperty("ID").getValue().toString();
+					getUI().getNavigator().navigateTo(DetailView.NAME+"/"+advertisementID);
+				} else {
+					Notification.show("Please select advertisement");
+				}
+            }
+        });
+
 
 		
 		layout();
@@ -217,9 +282,11 @@ public class MainView extends CustomComponent implements View{
 						setMargin(true);
 						setSpacing(true);
 						addComponent(DesignBidBuild);
-						DesignBidBuild.setWidth("1200px");
+						DesignBidBuild.setWidth("1350px");
 						setComponentAlignment(DesignBidBuild, Alignment.MIDDLE_CENTER);
 						setExpandRatio(DesignBidBuild, 1.0f);
+						addComponent(DBBViewButton);
+						setComponentAlignment(DBBViewButton, Alignment.BOTTOM_RIGHT);
 					}
 				});
 				
@@ -229,9 +296,11 @@ public class MainView extends CustomComponent implements View{
 						setSpacing(true);
 						
 						addComponent(DesignAndBuildProposal);
-						DesignAndBuildProposal.setWidth("1200px");
+						DesignAndBuildProposal.setWidth("1350px");
 						setComponentAlignment(DesignAndBuildProposal, Alignment.MIDDLE_CENTER);
 						setExpandRatio(DesignAndBuildProposal, 1.0f);
+						addComponent(DBPViewButton);
+						setComponentAlignment(DBPViewButton, Alignment.BOTTOM_RIGHT);
 					}
 				});
 				
@@ -251,9 +320,11 @@ public class MainView extends CustomComponent implements View{
 						setMargin(true);
 						setSpacing(true);
 						addComponent(CMAtRisk);
-						CMAtRisk.setWidth("1200px");
+						CMAtRisk.setWidth("1350px");
 						setComponentAlignment(CMAtRisk, Alignment.MIDDLE_CENTER);
 						setExpandRatio(CMAtRisk, 1.0f);
+						addComponent(CMViewButton);
+						setComponentAlignment(CMViewButton, Alignment.BOTTOM_RIGHT);
 					}
 				});
 				
@@ -262,9 +333,11 @@ public class MainView extends CustomComponent implements View{
 						setMargin(true);
 						setSpacing(true);
 						addComponent(OpenedBids);
-						OpenedBids.setWidth("1200px");
+						OpenedBids.setWidth("1350px");
 						setComponentAlignment(OpenedBids, Alignment.MIDDLE_CENTER);
 						setExpandRatio(OpenedBids, 1.0f);
+						addComponent(ROViewButton);
+						setComponentAlignment(ROViewButton, Alignment.BOTTOM_RIGHT);
 					}
 				});
 				
@@ -273,9 +346,11 @@ public class MainView extends CustomComponent implements View{
 						setMargin(true);
 						setSpacing(true);
 						addComponent(RecentlyAwarded);
-						RecentlyAwarded.setWidth("1200px");
+						RecentlyAwarded.setWidth("1350px");
 						setComponentAlignment(RecentlyAwarded, Alignment.MIDDLE_CENTER);
 						setExpandRatio(RecentlyAwarded, 1.0f);
+						addComponent(RAViewButton);
+						setComponentAlignment(RAViewButton, Alignment.BOTTOM_RIGHT);
 					}
 				});
 				
