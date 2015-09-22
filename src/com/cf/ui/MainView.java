@@ -47,6 +47,7 @@ public class MainView extends CustomComponent implements View{
 	private VerticalLayout rootLayout;
 	private String advertisementID;
 	private Button logoutButton;
+	private Button backButton;
     private Button DBBViewButton;
     private Button DBPViewButton;
     private Button CMViewButton;
@@ -58,6 +59,16 @@ public class MainView extends CustomComponent implements View{
 		welcomeLabel = new Label() {
 			
 		};
+		
+		backButton = new Button("back",new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+            	getUI().getPage().setLocation("");
+            	getUI().getSession().close();
+            }
+        });
+		
+		
 		logoutButton = new Button("logout",new Button.ClickListener() {
             @Override
             public void buttonClick(ClickEvent event) {
@@ -268,7 +279,7 @@ public class MainView extends CustomComponent implements View{
 							{
 								setSpacing(true);
 								setMargin(true);
-								//addComponent(viewButton);
+								addComponent(backButton);
 								addComponent(logoutButton);
 							}
 						};

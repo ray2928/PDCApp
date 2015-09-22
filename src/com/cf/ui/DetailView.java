@@ -25,6 +25,8 @@ import com.vaadin.event.ItemClickEvent;
 import com.vaadin.event.ItemClickEvent.ItemClickListener;
 import com.vaadin.event.SelectionEvent;
 import com.vaadin.event.SelectionEvent.SelectionListener;
+import com.vaadin.event.ShortcutAction.KeyCode;
+import com.vaadin.event.ShortcutListener;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.shared.ui.datefield.Resolution;
@@ -155,7 +157,7 @@ public class DetailView extends CustomComponent implements View{
     private Button referenceDocumentDownloadButton;
     private Button sealedDocumentsDownloadButton;
     private String downloadPath = "";
-    
+    private String advBreakDownQueryString;
 	public DetailView() {
 		welcomeLabel = new Label() {
 			
@@ -405,7 +407,7 @@ public class DetailView extends CustomComponent implements View{
 		
 		advBreakDownGrid = new Grid() {
 			{
-				setCaption("Advertisement Breakdown");
+				setCaption("Projects");
 				setWidth("100%");
 				
 				setDetailsGenerator(new DetailsGenerator() {
@@ -423,15 +425,15 @@ public class DetailView extends CustomComponent implements View{
 			        }
 			    });
 				
-				addItemClickListener(new ItemClickListener() {
-			        @Override
-			        public void itemClick(ItemClickEvent event) {
-			            if (event.isDoubleClick()) {
-			                Object itemId = event.getItemId();
-			                advBreakDownGrid.setDetailsVisible(itemId, !advBreakDownGrid.isDetailsVisible(itemId));
-			            }
-			        }
-			    });
+//				addItemClickListener(new ItemClickListener() {
+//			        @Override
+//			        public void itemClick(ItemClickEvent event) {
+//			            if (event.isDoubleClick()) {
+//			                Object itemId = event.getItemId();
+//			                advBreakDownGrid.setDetailsVisible(itemId, !advBreakDownGrid.isDetailsVisible(itemId));
+//			            }
+//			        }
+//			    });
 			}
 		};
 		
@@ -496,6 +498,7 @@ public class DetailView extends CustomComponent implements View{
 		layout();
 	}
 	
+	@SuppressWarnings("deprecation")
 	public void layout() {
 		viewLayout = new VerticalLayout() {
 			{
@@ -530,6 +533,7 @@ public class DetailView extends CustomComponent implements View{
 								setMargin(true);
 								setSpacing(true);
 								setSizeFull();
+								addComponent(advBreakDownGrid);
 								addComponent(new HorizontalLayout() {
 									{
 										setSpacing(true);
@@ -589,7 +593,7 @@ public class DetailView extends CustomComponent implements View{
 								});
 								addComponent(walkThroughLocation);
 								addComponent(walkThroughInstructions);
-								addComponent(advBreakDownGrid);
+								
 							}
 						});
 						
@@ -640,6 +644,7 @@ public class DetailView extends CustomComponent implements View{
 								setComponentAlignment(addendaDownloadButton, Alignment.MIDDLE_RIGHT);
 								setComponentAlignment(referenceDocumentDownloadButton, Alignment.MIDDLE_RIGHT);
 								setComponentAlignment(sealedDocumentsDownloadButton, Alignment.MIDDLE_RIGHT);
+
 							}
 						});			
 						
@@ -723,6 +728,7 @@ public class DetailView extends CustomComponent implements View{
 				    	    	    				pContainer.commit();
 				    	    	    				Notification.show("Plan Submitted");
 				    	    	    				//planHoldersContainer.refresh();
+				    	    	    				email.setValue("");
 				    	    	    				planHolders.clearSortOrder();
 												} catch (SQLException e) {
 													// TODO Auto-generated catch block
@@ -736,14 +742,21 @@ public class DetailView extends CustomComponent implements View{
 										setComponentAlignment(submit, Alignment.TOP_RIGHT);
 									}
 								};
+								addComponent(planHolders);
 								addComponent(planHolderForm);
 								addComponent(buttonLayout);
-								addComponent(planHolders);
 								setComponentAlignment(planHolderForm, Alignment.MIDDLE_CENTER);
 								setComponentAlignment(buttonLayout, Alignment.MIDDLE_CENTER);
 								setComponentAlignment(planHolders, Alignment.MIDDLE_CENTER);
 							}
 						}); 	
+						addListener(new TabSheet.SelectedTabChangeListener() {
+						    @Override
+						    public void selectedTabChange(SelectedTabChangeEvent event) {
+						    	System.out.println("re-enter");
+						    	advBreakDownGrid.clearSortOrder();
+						    }
+						});
 					}
 				};
 				addComponent(tabs);
@@ -768,41 +781,23 @@ public class DetailView extends CustomComponent implements View{
 		binder.bindMemberFields(this);
 		binder.setReadOnly(true);
 		
-		String advBreakDownQueryString = "select " 
-										+"p.CAMPUSNAME as campus, " 
-										+"p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE as title, "
-										+"sum(a.AMOUNT) as MAXBUDGET, "
-										+"0.9 * sum(a.AMOUNT) as MINBUDGET, "
-										+"p.PUBLICDESCRIPTION as description " 
-										+"from ADVERTISEMENTBREAKDOWNDETAILS a " 
-										+"inner join PROJECTDETAILSV1 p on a.PCSPROJECTID = p.id "
-										+"where a.refobjectid = '"+advertisementID+"' "
-										+"group by a.pcsprojectid, p.CAMPUSNAME, p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE, p.PUBLICDESCRIPTION";
+		advBreakDownQueryString = "select " 
+								+"p.CAMPUSNAME as campus, " 
+								+"p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE as title, "
+								+"sum(a.AMOUNT) as MAXBUDGET, "
+								+"0.9 * sum(a.AMOUNT) as MINBUDGET, "
+								+"p.PUBLICDESCRIPTION as description " 
+								+"from ADVERTISEMENTBREAKDOWNDETAILS a " 
+								+"inner join PROJECTDETAILSV1 p on a.PCSPROJECTID = p.id "
+								+"where a.refobjectid = '"+advertisementID+"' "
+								+"group by a.pcsprojectid, p.CAMPUSNAME, p.PROJECTNUMBER||' - '||p.TITLELOCATION||' - '||p.TITLE, p.PUBLICDESCRIPTION";
 
-//		System.out.println(advBreakDownQueryString);
-//		FreeformQuery advBreakDownQuery = new FreeformQuery(advBreakDownQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
-//		try {
-//			advBreakdownContainer = new SQLContainer(advBreakDownQuery);
-//			advBreakDownGrid.setContainerDataSource(advBreakdownContainer);
-//		} catch (SQLException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		new GridDataLoader(advBreakDownQueryString, advBreakDownGrid, advBreakdownContainer).start();;
-
+		new GridDataLoader(advBreakDownQueryString, advBreakDownGrid, advBreakdownContainer).start();
 
 		String planHolderQueryString = "select P.EMAILADDRESS, "
 										+"p.FIRMNAME, P.ADDRESS, p.CITY, p.COUNTY, "
 										+ "P.STATE, P.COUNTRYCODE, P.POSTALCODE, P.PHONENUM "
 										+ "from planholders p where p.refobjectid = '"+advertisementID+"'";
-//		FreeformQuery planHolderQuery = new FreeformQuery(planHolderQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
-//		try {
-//			planHoldersContainer = new SQLContainer(planHolderQuery);
-//			planHolders.setContainerDataSource(planHoldersContainer);
-//		} catch (SQLException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 		new GridDataLoader(planHolderQueryString, planHolders, planHoldersContainer).start();;
 
 		if(!userID.equals("0")) {
@@ -930,7 +925,9 @@ public class DetailView extends CustomComponent implements View{
 						}
 						if(grid.getColumn("DESCRIPTION") != null) {
 							grid.getColumn("DESCRIPTION").setHidden(true);
-
+							for(Object id:advBreakDownGrid.getContainerDataSource().getItemIds()) {
+								advBreakDownGrid.setDetailsVisible(id, !advBreakDownGrid.isDetailsVisible(id));
+							}
 						}
 					}
 				});

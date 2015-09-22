@@ -64,7 +64,6 @@ public class LoginView extends CustomComponent implements View{
                 setWidth("300px");
                 setInputPrompt("Your email");
                 addValidator(new EmailValidator("Username must be an email address"));
-                setInvalidAllowed(false);
         	}
         };
         password = new PasswordField("password"){
@@ -76,30 +75,24 @@ public class LoginView extends CustomComponent implements View{
         
         newUsername = new TextField("User Name:") {
     		{
-    			setImmediate(true);
     			setWidth("300px");
                 setRequired(true);
                 setInputPrompt("Your email");
                 addValidator(new EmailValidator("Username must be an email address"));
-                setInvalidAllowed(false);
     		}
         };//should be email
         newPassword = new PasswordField("Password:") {
         	{
                 setRequired(true);
-    			setImmediate(true);
     			setWidth("300px");
-                setInvalidAllowed(false);
                 addValidator(new PasswordValidator());
         	}
         };
         confirmPassword = new PasswordField("Confirm Password:") {
         	{                
         		setRequired(true);
-        		setImmediate(true);
     			setWidth("300px");
-                setInvalidAllowed(false);
-                addValidator(new PasswordValidator());
+//                addValidator(new PasswordValidator());
                 addValueChangeListener(new Property.ValueChangeListener() {
 					@Override
 					public void valueChange(com.vaadin.data.Property.ValueChangeEvent event) {
