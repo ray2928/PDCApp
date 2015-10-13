@@ -2,9 +2,12 @@ package edu.missouri.cf.pdcapp.ui;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
+import com.vaadin.data.Container.Filter;
 import com.vaadin.data.Property;
 import com.vaadin.data.util.filter.Compare;
+import com.vaadin.data.util.filter.SimpleStringFilter;
 import com.vaadin.data.util.sqlcontainer.SQLContainer;
 import com.vaadin.data.util.sqlcontainer.query.FreeformQuery;
 import com.vaadin.data.util.sqlcontainer.query.TableQuery;
@@ -18,6 +21,7 @@ import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.FormLayout;
+import com.vaadin.ui.Grid.Column;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.PasswordField;
@@ -29,6 +33,7 @@ import edu.missouri.cf.pdcapp.dbconnect.Pools;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.AdvancedDownloaderListener;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.DownloaderEvent;
+import edu.missouri.cf.pdcapp.ui.converter.PwdEncryptor;
 import edu.missouri.cf.pdcapp.validator.PasswordValidator;
 
 public class LoginView extends CustomComponent implements View{
@@ -57,10 +62,12 @@ public class LoginView extends CustomComponent implements View{
     private Button loginAsVisitorButton;
     private HorizontalLayout buttonLayout;
     private HorizontalLayout registerButtonLayout;
+	private PwdEncryptor pe;
+
     @SuppressWarnings("serial")
 	public LoginView() {
         setSizeFull();
-
+        pe = new PwdEncryptor();
         username = new TextField("Username"){
         	{
                 setWidth("300px");
@@ -230,31 +237,33 @@ public class LoginView extends CustomComponent implements View{
     	    			loginButton = new Button("Login", new Button.ClickListener() {
     	    	            @Override
     	    	            public void buttonClick(ClickEvent event) {
-    	    	    			String userQueryString = "select * from advertisementusers u";
-    	    	    			FreeformQuery userQuery = new FreeformQuery(userQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
-    	    	    			boolean userExist = false;
+	    	    				TableQuery userQuery = new TableQuery("advertisementusers", Pools.getConnectionPool(Pools.Names.PROJEX), new OracleGenerator());
+    	    	    			boolean authentic = false;
     	    	    			String userID = "";
     	    	    			SQLContainer container = null;
     	    	    			try {
     	    	    				container = new SQLContainer(userQuery);
-    	    	    				container.addContainerFilter(new Compare.Equal("USERLOGIN", username.getConvertedValue()));
-    	    	    				if(container.getItemIds().size() != 0){
-    	    	    					System.out.println(container.getItem(container.firstItemId()).getItemProperty("PASSWORD").getValue().toString()+"?");
-    	    	    					if(container.getItem(container.firstItemId()).getItemProperty("PASSWORD").getValue().toString().equals(password.getConvertedValue())) {
-    	    	    						userExist = true;
+    	    	    				container.addContainerFilter(new Compare.Equal("USERLOGIN", username.getConvertedValue().toString()));
+    	    	    				if(container.size()!=0){
+    	    	    					String inputPwd = pe.encrypt(password.getConvertedValue().toString(), username.getValue());
+    	    	    					if(container.getItem(container.firstItemId()).getItemProperty("PASSWORD").getValue().toString().equals(inputPwd)) {
+    	    	    						authentic = true;
     	    	    					} else {
     	    	    						Notification.show("Invalid Password");
-    	    	            				password.focus();
-    	    	    					}
+    	    	            				password.setValue("");
+    	    	    						password.focus();
+    	    	            			}
     	    	    				} else {
     	    	        				Notification.show("The account does not exist, please try again");
+    	    	        				username.setValue("");
+	    	            				password.setValue("");
     	    	        				username.focus();
     	    	        			}
     	    	    			} catch (SQLException e) {
     	    	    				// TODO Auto-generated catch block
     	    	    				e.printStackTrace();
     	    	    			}
-    	    	    			if(userExist){
+    	    	    			if(authentic){
     	    	    				userID = container.getItem(container.firstItemId()).getItemProperty("ID").getValue().toString();
     	    	    				getSession().setAttribute("userID", userID);
     	    	    				getSession().setAttribute("user", username.getValue());
@@ -326,13 +335,12 @@ public class LoginView extends CustomComponent implements View{
     	    	            		Notification.show("Please enter new username/email ");
     	    	            		return;
     	    	            	}
-    	    	            	String userQueryString = "select * from advertisementusers a";
-    	    	    			FreeformQuery userQuery = new FreeformQuery(userQueryString, Pools.getConnectionPool(Pools.Names.PROJEX));
-    	    	    			boolean userExist = true;
+	    	    				TableQuery userQuery = new TableQuery("advertisementusers", Pools.getConnectionPool(Pools.Names.PROJEX), new OracleGenerator());
+    	    	            	boolean userExist = true;
     	    	    			try {
     	    	    				SQLContainer container = new SQLContainer(userQuery);
     	    	    				container.addContainerFilter(new Compare.Equal("USERLOGIN", newUsername.getConvertedValue()));
-    	    	    				userExist = container.getItemIds().size() != 0;
+    	    	    				userExist = container.size() != 0;
     	    	    			} catch (SQLException e) {
     	    	    				// TODO Auto-generated catch block
     	    	    				e.printStackTrace();
@@ -347,7 +355,7 @@ public class LoginView extends CustomComponent implements View{
 	    	    	    				userContainer.getContainerProperty(add_user, "ID").setValue(lastID);
 	    	    	    				userContainer.getContainerProperty(add_user, "ROWSTAMP").setValue(lastID);
 	    	    	    				userContainer.getContainerProperty(add_user, "USERLOGIN").setValue(newUsername.getConvertedValue());
-	    	    	    				userContainer.getContainerProperty(add_user, "PASSWORD").setValue(newPassword.getConvertedValue());
+	    	    	    				userContainer.getContainerProperty(add_user, "PASSWORD").setValue(pe.encrypt(newPassword.getConvertedValue().toString(),newUsername.getConvertedValue().toString()));
 	    	    	    				userContainer.getContainerProperty(add_user, "PASSWORDEXPIRATION").setValue(new oracle.sql.TIMESTAMP(new java.sql.Date(System.currentTimeMillis())));
    	      	    				 	    userContainer.getContainerProperty(add_user, "FORCEEXPIRATION").setValue(BigDecimal.ONE);
 	    	      	    				userContainer.getContainerProperty(add_user, "ISACTIVE").setValue(BigDecimal.ONE);
@@ -361,6 +369,7 @@ public class LoginView extends CustomComponent implements View{
 	    	      	    				userContainer.getContainerProperty(add_user, "PHONENUM").setValue(phone.getConvertedValue());
 	    	    	    				userContainer.commit();
 	    	    	    				Notification.show("New user created");
+	    	    	    				//reset fields
 									} catch (SQLException e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();

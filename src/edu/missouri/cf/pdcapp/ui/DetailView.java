@@ -416,9 +416,12 @@ public class DetailView extends CustomComponent implements View{
 			        @Override
 			        public Component getDetails(RowReference rowReference) {
 			            Label label = new Label("Description:");
-			            
-			            Label descriptionLabel = new Label(rowReference.getItem().getItemProperty("DESCRIPTION").getValue().toString());
-
+			        	Label descriptionLabel = null;
+			            if(rowReference.getItem().getItemProperty("DESCRIPTION").getValue() != null){
+			            	descriptionLabel = new Label(rowReference.getItem().getItemProperty("DESCRIPTION").getValue().toString());
+			            } else {
+			            	descriptionLabel = new Label("Currently No Description.");
+			            }
 			            // Wrap up all the parts into a vertical layout
 			            VerticalLayout layout = new VerticalLayout(label,  descriptionLabel);
 			            layout.setSpacing(true);
@@ -800,7 +803,7 @@ public class DetailView extends CustomComponent implements View{
 										+"p.FIRMNAME, P.ADDRESS, p.CITY, p.COUNTY, "
 										+ "P.STATE, P.COUNTRYCODE, P.POSTALCODE, P.PHONENUM "
 										+ "from planholders p where p.refobjectid = '"+advertisementID+"'";
-		new GridDataLoader(planHolderQueryString, planHolders, planHoldersContainer).start();;
+		new GridDataLoader(planHolderQueryString, planHolders, planHoldersContainer).start();
 
 		if(!userID.equals("0")) {
 			String userInfoQueryString = "select * from advertisementusers a where a.id = '"+userID+"'";
