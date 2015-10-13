@@ -1,4 +1,4 @@
-package edu.missouri.cf.pdcapp.ui.converter;
+package edu.missouri.cf.pdcapp.model;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

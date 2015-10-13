@@ -8,6 +8,8 @@ import java.util.Locale;
 import com.vaadin.data.util.converter.Converter;
 import com.vaadin.ui.Notification;
 
+import edu.missouri.cf.pdcapp.model.OracleCurrency;
+
 /**
  * @author graumannc
  * 

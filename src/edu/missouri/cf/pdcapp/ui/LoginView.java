@@ -14,11 +14,13 @@ import com.vaadin.data.util.sqlcontainer.query.TableQuery;
 import com.vaadin.data.util.sqlcontainer.query.generator.OracleGenerator;
 import com.vaadin.data.validator.AbstractValidator;
 import com.vaadin.data.validator.EmailValidator;
+import com.vaadin.data.validator.IntegerValidator;
 import com.vaadin.navigator.View;
 import com.vaadin.navigator.ViewChangeListener.ViewChangeEvent;
 import com.vaadin.ui.Alignment;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.ComboBox;
+import com.vaadin.ui.Component;
 import com.vaadin.ui.CustomComponent;
 import com.vaadin.ui.FormLayout;
 import com.vaadin.ui.Grid.Column;
@@ -33,6 +35,7 @@ import edu.missouri.cf.pdcapp.dbconnect.Pools;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.AdvancedDownloaderListener;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.DownloaderEvent;
+import edu.missouri.cf.pdcapp.ui.component.StandardComboBox;
 import edu.missouri.cf.pdcapp.ui.converter.PwdEncryptor;
 import edu.missouri.cf.pdcapp.validator.PasswordValidator;
 
@@ -54,7 +57,8 @@ public class LoginView extends CustomComponent implements View{
 	private TextField city;
 	private TextField county;
 	private TextField state;
-	private TextField country;
+//	private TextField country;
+	private StandardComboBox country;
 	private TextField zip;
 	private TextField phone;
 	private Button reset;
@@ -160,21 +164,22 @@ public class LoginView extends CustomComponent implements View{
 
 			}
 		};
-		country = new TextField("Country:") {
+		country = new StandardComboBox("Country Codes", "Country:") {
 			{
-                setRequired(true);
         		setWidth("300px");
-                setInvalidAllowed(false);
-    			setImmediate(true);
-
+				setRequired(true);
+				setImmediate(true);
 			}
 		};
+		country.refreshDataCollection();
+		
+		
 		zip = new TextField("Zip:") {
 			{
                 setRequired(true);
         		setWidth("300px");
             	setImmediate(true);
-    			setInvalidAllowed(false);
+    			addValidator(new IntegerValidator("Invalid Input"));
 			}
 			
 		};
@@ -182,9 +187,8 @@ public class LoginView extends CustomComponent implements View{
 			{
                 setRequired(true);
         		setWidth("300px");
-                setInvalidAllowed(false);
     			setImmediate(true);
-
+    			addValidator(new IntegerValidator("Invalid Input"));
 			}
 		};
         layout();
@@ -313,17 +317,7 @@ public class LoginView extends CustomComponent implements View{
 							@Override
 							public void buttonClick(ClickEvent event) {
 								// TODO Auto-generated method stub
-		    	    			newUsername.setValue("");
-		    	    			newPassword.setValue("");
-		    	    			confirmPassword.setValue("");
-		    	    			firmName.setValue("");
-		    	    			address.setValue("");
-		    	    			city.setValue("");
-		    	    			county.setValue("");
-		    	    			state.setValue("");
-		    	    			country.setValue("");
-		    	    			zip.setValue("");
-		    	    			phone.setValue("");
+		    	    			resetFields(registerFields);
 							}
 						});
 						
@@ -337,6 +331,7 @@ public class LoginView extends CustomComponent implements View{
     	    	            	}
 	    	    				TableQuery userQuery = new TableQuery("advertisementusers", Pools.getConnectionPool(Pools.Names.PROJEX), new OracleGenerator());
     	    	            	boolean userExist = true;
+    	    	            	boolean validField = validateFields(registerFields);
     	    	    			try {
     	    	    				SQLContainer container = new SQLContainer(userQuery);
     	    	    				container.addContainerFilter(new Compare.Equal("USERLOGIN", newUsername.getConvertedValue()));
@@ -345,7 +340,7 @@ public class LoginView extends CustomComponent implements View{
     	    	    				// TODO Auto-generated catch block
     	    	    				e.printStackTrace();
     	    	    			}
-    	    	    			if(!userExist) {
+    	    	    			if(!userExist && validField) {
     	    	    				TableQuery q1 = new TableQuery("advertisementusers", Pools.getConnectionPool(Pools.Names.PROJEX), new OracleGenerator());
     	    	    				SQLContainer userContainer;
 									try {
@@ -364,13 +359,13 @@ public class LoginView extends CustomComponent implements View{
 	    	      	    				userContainer.getContainerProperty(add_user, "CITY").setValue(city.getConvertedValue());
 	    	      	    				userContainer.getContainerProperty(add_user, "COUNTY").setValue(county.getConvertedValue());
 	    	      	    				userContainer.getContainerProperty(add_user, "STATE").setValue(state.getConvertedValue());
-	    	      	    				userContainer.getContainerProperty(add_user, "COUNTRYCODE").setValue(country.getConvertedValue());
+	    	      	    				userContainer.getContainerProperty(add_user, "COUNTRYCODE").setValue(country.getConvertedValue().toString());
 	    	      	    				userContainer.getContainerProperty(add_user, "POSTALCODE").setValue(zip.getConvertedValue());
 	    	      	    				userContainer.getContainerProperty(add_user, "PHONENUM").setValue(phone.getConvertedValue());
 	    	    	    				userContainer.commit();
 	    	    	    				Notification.show("New user created");
-	    	    	    				//reset fields
-									} catch (SQLException e) {
+	    	    	    				resetFields(registerFields);
+	    	    	    			} catch (SQLException e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
 		    	    	    			Notification.show("User register failed, please try again.");
@@ -379,7 +374,8 @@ public class LoginView extends CustomComponent implements View{
     	    	    				registerButtonLayout.setVisible(false);
         	    	    			return;
     	    	    			}
-    	    	    			Notification.show("The user name already exists, try different one");
+    	    	    			Notification.show("Invalid input or the user name exists");
+    	    	    			newUsername.focus();
     	    	            }
     	    	        });
     					addComponent(reset);
@@ -409,7 +405,37 @@ public class LoginView extends CustomComponent implements View{
     @Override
     public void enter(ViewChangeEvent event) {
     }
-    	
-        
+    
+    public boolean validateFields(FormLayout layout){
+    	for(Component c : layout) {
+    	    if(c instanceof TextField) {
+    	    	TextField f = (TextField) c;
+    	        if(f.getValue().equals("")){
+    	        	return false;
+    	        }
+    	    } else if(c instanceof PasswordField) {
+    	    	PasswordField f = (PasswordField) c;
+    	    	if(f.getValue().equals("")){
+    	        	return false;
+    	        }
+    	    }
+    	}
+    	return true;
+    }
+    
+    public void resetFields(FormLayout layout) {
+    	for(Component c : layout) {
+    	    if(c instanceof TextField) {
+    	    	TextField f = (TextField) c;
+    	        f.setValue("");
+    	    } else if(c instanceof PasswordField) {
+    	    	PasswordField f = (PasswordField) c;
+    	        f.setValue("");
+    	    } else if(c instanceof StandardComboBox) {
+    	    	StandardComboBox f = (StandardComboBox) c;
+    	    	f.select(f.getNullSelectionItemId());
+    	    }
+    	}
+    }
     
 }

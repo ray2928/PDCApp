@@ -44,6 +44,7 @@ import edu.missouri.cf.pdcapp.dbconnect.Pools;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.AdvancedDownloaderListener;
 import edu.missouri.cf.pdcapp.document.AdvancedFileDownloader.DownloaderEvent;
+import edu.missouri.cf.pdcapp.ui.component.StandardComboBox;
 import edu.missouri.cf.pdcapp.ui.converter.BigDecimalToBooleanConverter;
 import edu.missouri.cf.pdcapp.ui.converter.OracleCurrencyToStringConverter;
 import edu.missouri.cf.pdcapp.ui.converter.OracleTimestampToDateConverter;
@@ -122,7 +123,8 @@ public class DetailView extends CustomComponent implements View{
 	@PropertyId("COUNTY")
 	private TextField county;
 	@PropertyId("COUNTRYCODE")
-	private TextField country;
+//	private TextField country;
+	private StandardComboBox country; 
 	@PropertyId("POSTALCODE")
 	private TextField zip;
 	@PropertyId("PHONENUM")
@@ -367,11 +369,20 @@ public class DetailView extends CustomComponent implements View{
         		setWidth("300px");
 			}
 		};
-		country = new TextField("Country:") {
+//		country = new TextField("Country:") {
+//			{
+//        		setWidth("300px");
+//			}
+//		};
+		country = new StandardComboBox("Country Codes", "Country:") {
 			{
         		setWidth("300px");
+				setRequired(true);
+				setImmediate(true);
 			}
 		};
+		country.refreshDataCollection();
+		
 		zip = new TextField("Zip:") {
 			{
         		setWidth("300px");
